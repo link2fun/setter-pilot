@@ -1,4 +1,4 @@
-package com.github.link2fun.setterpilot.toolWindow;
+package com.github.link2fun.setterpilot.toolwindow;
 
 import com.github.link2fun.setterpilot.MyBundle;
 import com.github.link2fun.setterpilot.services.MyProjectService;
