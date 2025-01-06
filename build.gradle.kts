@@ -33,6 +33,14 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
 
+    implementation("cn.hutool:hutool-core:5.8.25")
+
+    // 引入 lombok
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
+    testCompileOnly("org.projectlombok:lombok:1.18.34")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
+
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
@@ -42,6 +50,7 @@ dependencies {
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
+        intellijIdeaCommunity(providers.gradleProperty("platformVersion"))
 
         instrumentationTools()
         pluginVerifier()

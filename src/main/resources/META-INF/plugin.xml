@@ -5,14 +5,19 @@
     <vendor>link2fun</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.link2fun.setterpilot.toolwindow.MyToolWindowFactory" id="MyToolWindow"/>
+<!--        <toolWindow factoryClass="com.github.link2fun.setterpilot.toolwindow.MyToolWindowFactory" id="MyToolWindow"/>-->
+        <completion.contributor language="JAVA"
+                                id="com.github.link2fun.setterpilot.completion.SetterMissAutoCompletion"
+                                implementationClass="com.github.link2fun.setterpilot.completion.SetterMissAutoCompletion"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.link2fun.setterpilot.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+<!--        <listener class="com.github.link2fun.setterpilot.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
     </applicationListeners>
 </idea-plugin>
