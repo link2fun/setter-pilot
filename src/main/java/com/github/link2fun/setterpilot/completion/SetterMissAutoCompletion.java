@@ -62,34 +62,31 @@ public class SetterMissAutoCompletion extends CompletionContributor {
 
 
   private static List<LookupElement> completionForUnusedSetter(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-//        if (parameters.getCompletionType() != CompletionType.BASIC) {
-    System.out.println("completionType not BASIC, current is: " + parameters.getCompletionType());
-//            return Lists.newArrayList();
-//        }
-    System.out.println("1. completionType is BASIC");
+    logger.debug("completionType not BASIC, current is: {}", parameters.getCompletionType());
+    logger.debug("1. completionType is BASIC");
 
     PrefixMatcher prefixMatcher = result.getPrefixMatcher();
     String prefix = prefixMatcher.getPrefix();
     if (!StrUtil.startWithAny(prefix, "set", "se")) {
-      System.out.println("prefix not start with set, current is: " + prefix);
+      logger.debug("prefix not start with set, current is: {}", prefix);
       return Lists.newArrayList();
     }
-    System.out.println("2. prefix is set");
+    logger.debug("2. prefix is set");
 
     PsiElement position = parameters.getPosition();
     if (!(position instanceof PsiIdentifier)) {
-      System.out.println("position not instance of PsiIdentifier");
+      logger.debug("position not instance of PsiIdentifier");
       return Lists.newArrayList();
     }
-    System.out.println("3. position is PsiIdentifier");
+    logger.debug("3. position is PsiIdentifier");
 
     PsiElement firstChild = ((PsiReferenceExpressionImpl) ((PsiIdentifierImpl) position).getTreeParent())
       .getFirstChild();
     if (!(firstChild instanceof PsiReferenceExpression)) {
-      System.out.println("firstChild not instance of PsiReferenceExpression");
+      logger.debug("firstChild not instance of PsiReferenceExpression");
       return Lists.newArrayList();
     }
-    System.out.println("4. firstChild is PsiReferenceExpression");
+    logger.debug("4. firstChild is PsiReferenceExpression");
     PsiElement resolve = ((PsiReferenceExpression) firstChild).resolve();
     PsiType type;
 
@@ -99,25 +96,25 @@ public class SetterMissAutoCompletion extends CompletionContributor {
     } else if (resolve instanceof PsiParameter) {
       type = ((PsiParameter) resolve).getType();
     } else {
-      System.out.println("resolve not instance of PsiLocalVariable or PsiParameter");
+      logger.debug("resolve not instance of PsiLocalVariable or PsiParameter");
       return Lists.newArrayList();
     }
-    System.out.println("5. resolve is PsiLocalVariable");
+    logger.debug("5. resolve is PsiLocalVariable");
     // 找到对应类型的 setter 方法
 
     Project project = position.getProject();
     PsiClass aClass = PsiJavaUtil.getPsiClass(project, type.getCanonicalText());
     List<FieldGetterSetter> typeSetterMethodList = PsiJavaUtil.getFieldsWithGetterAndSetter(aClass);
-    System.out.println("6. typeSetterMethodList is " + typeSetterMethodList);
+    logger.debug("6. typeSetterMethodList is {}", typeSetterMethodList);
 
     Collection<PsiReference> callList = ReferencesSearch.search(resolve).findAll();
-    System.out.println("7. callList is " + callList);
+    logger.debug("7. callList is {}", callList);
     // 找到里面所有的 methodCall
     List<PsiMethodCallExpression> methodCallExpressionList = callList.stream()
       .map(ele -> ele.getElement().getParent().getParent())
       .filter(ele -> ele instanceof PsiMethodCallExpression)
       .map(ele -> (PsiMethodCallExpression) ele).toList();
-    System.out.println("8. methodCallExpressionList is " + methodCallExpressionList);
+    logger.debug("8. methodCallExpressionList is {}", methodCallExpressionList);
 
     // 设置已经调用的方法
 
@@ -125,27 +122,27 @@ public class SetterMissAutoCompletion extends CompletionContributor {
     List<String> setterListCalled = methodCallExpressionList.stream()
       .map(methodCall -> methodCall.getMethodExpression().getLastChild().getText())
       .toList();
-    System.out.println("9. setterListCalled is " + setterListCalled);
+    logger.debug("9. setterListCalled is {}", setterListCalled);
 
     // 找到尚未调用的方法
     List<FieldGetterSetter> setterListMiss = typeSetterMethodList.stream()
       .filter(info -> Objects.nonNull(info.getSetter()))
       .filter(setter -> !setterListCalled.contains(setter.getSetter().getName()))
       .collect(Collectors.toList());
-    System.out.println("10. setterListMiss is " + setterListMiss);
+    logger.debug("10. setterListMiss is {}", setterListMiss);
 
     if (CollectionUtil.isEmpty(setterListMiss)) {
-      System.out.println("没有找到setter方法");
+      logger.debug("没有找到setter方法");
       return Lists.newArrayList();
     }
-    System.out.println("11. setterListMiss is not empty");
+    logger.debug("11. setterListMiss is not empty");
 
 
     List<LookupElement> lookupElementList = Lists.newArrayList();
 
     for (FieldGetterSetter fieldWithGetterSetter : setterListMiss) {
       String setterMethodName = fieldWithGetterSetter.getSetter().getName();
-      System.out.println("===========> add " + setterMethodName);
+      logger.debug("===========> add {}", setterMethodName);
       PsiDocComment docComment = fieldWithGetterSetter.getField().getDocComment();
 
       String commentStr = PsiCommentUtil.getCommentFirstLine(docComment);
