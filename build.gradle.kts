@@ -33,7 +33,7 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
 
-    implementation("cn.hutool:hutool-core:5.8.25")
+    implementation("cn.hutool:hutool-core:5.8.36")
 
     // 引入 lombok
     compileOnly("org.projectlombok:lombok:1.18.34")
