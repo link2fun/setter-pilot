@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -127,6 +128,10 @@ public class SetterMissAutoCompletion extends CompletionContributor {
     // 找到尚未调用的方法
     List<FieldGetterSetter> setterListMiss = typeSetterMethodList.stream()
       .filter(info -> Objects.nonNull(info.getSetter()))
+      .filter(info -> info.getField().getAnnotations().length == 0 || 
+                     Arrays.stream(info.getField().getAnnotations())
+                           .noneMatch(annotation -> "com.easy.query.core.annotation.Navigate"
+                                    .equals(annotation.getQualifiedName())))
       .filter(setter -> !setterListCalled.contains(setter.getSetter().getName()))
       .collect(Collectors.toList());
     logger.debug("10. setterListMiss is {}", setterListMiss);
