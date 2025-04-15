@@ -53,61 +53,66 @@ public class PsiJavaUtil {
       return Lists.newArrayList();
     }
 
+    // 获取原始类（从源码）
+    PsiClass originalClass = (PsiClass) psiClass.getNavigationElement();
+    logger.debug("获取类: {}, 是否为源码类: {}", originalClass.getQualifiedName(), originalClass != psiClass);
 
-    // 获取所有的字段
-    PsiField[] psiFields = psiClass.getAllFields();
+    // 获取所有的字段（从源码）
+    PsiField[] psiFields = originalClass.getAllFields();
+    logger.debug("获取到字段数量: {}", psiFields.length);
 
-    // 获取所有方法
-    PsiMethod[] psiMethods = psiClass.getAllMethods();
+    // 获取所有方法（从源码）
+    PsiMethod[] psiMethods = originalClass.getAllMethods();
+    logger.debug("获取到方法数量: {}", psiMethods.length);
 
     List<FieldGetterSetter> result = Lists.newArrayList();
 
     // 开始匹配
     for (PsiField psiField : psiFields) {
+      // 获取原始字段（从源码）
+      PsiField originalField = (PsiField) psiField.getNavigationElement();
+      logger.debug("处理字段: {}, 是否有注释: {}", originalField.getName(), originalField.getDocComment() != null);
 
       PsiMethod getter = null;
       PsiMethod setter = null;
       for (PsiMethod psiMethod : psiMethods) {
-        PsiElement navigationElement = psiMethod.getNavigationElement();
-        if (navigationElement == null) {
-          // 没有关联的元素, 应该不是 getter or setter
-          continue;
-        }
-        if (!(navigationElement instanceof PsiField)) {
+        String methodName = psiMethod.getName();
+        // 检查是否是当前字段的 getter/setter
+        if (!isGetterOrSetterForField(methodName, originalField.getName())) {
           continue;
         }
 
-        PsiField navField = (PsiField) navigationElement;
-
-        if (!StrUtil.equals(navField.getName(), psiField.getName())) {
-          // 不是当前字段
-          continue;
-        }
-
-        if (getter != null && setter != null) {
-          continue;
-        }
-
-
-        // getter , 如果没有方法参数, 且有返回值, 则初步认定是 getter
-        if (psiMethod.getParameterList().isEmpty() && StrUtil.equals(psiMethod.getReturnType().getCanonicalText(),psiField.getType().getCanonicalText()) ) {
+        // getter , 如果没有方法参数, 且有返回值, 则认定是 getter
+        if (methodName.startsWith("get") && psiMethod.getParameterList().isEmpty() 
+            && psiMethod.getReturnType() != null 
+            && StrUtil.equals(psiMethod.getReturnType().getCanonicalText(), originalField.getType().getCanonicalText())) {
           getter = psiMethod;
           continue;
         }
 
-        // setter , 如果只有一个参数, 且返回值是 void, 则初步认定是 setter
-        if (psiMethod.getParameterList().getParametersCount() == 1) {
+        // setter , 如果只有一个参数, 且参数类型匹配, 则认定是 setter
+        if (methodName.startsWith("set") && psiMethod.getParameterList().getParametersCount() == 1 
+            && psiMethod.getParameterList().getParameters()[0].getType().getCanonicalText().equals(originalField.getType().getCanonicalText())) {
           setter = psiMethod;
           continue;
         }
-
       }
 
-
-      result.add(FieldGetterSetter.of(psiField, getter, setter));
-
-
+      result.add(FieldGetterSetter.of(originalField, getter, setter));
     }
     return result;
+  }
+
+  /**
+   * 检查方法名是否是指定字段的 getter 或 setter
+   */
+  private static boolean isGetterOrSetterForField(String methodName, String fieldName) {
+    if (fieldName == null || methodName == null) {
+      return false;
+    }
+    String capitalizedFieldName = StrUtil.upperFirst(fieldName);
+    return methodName.equals("get" + capitalizedFieldName) 
+        || methodName.equals("set" + capitalizedFieldName)
+        || methodName.equals("is" + capitalizedFieldName);  // 处理 boolean 类型的 getter
   }
 }
