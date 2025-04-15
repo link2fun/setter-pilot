@@ -41,22 +41,18 @@ public class SetterMissAutoCompletion extends CompletionContributor {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(PsiIdentifier.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+        // 在开始时重启completion
+        completionResultSet.restartCompletionOnPrefixChange("set");
 
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-
-          completionResultSet.restartCompletionOnPrefixChange("set");
-
-          List<LookupElement> lookupElementList = Lists.newArrayList();
-
-          ReadAction.run(() -> {
-            lookupElementList.addAll(completionForUnusedSetter(completionParameters, completionResultSet));
-          });
-
-          if (CollectionUtil.isNotEmpty(lookupElementList)) {
-            lookupElementList.forEach(completionResultSet::addElement);
-          }
-
+        // 在 ReadAction 中执行所有操作
+        List<LookupElement> lookupElementList = ReadAction.compute(() -> {
+          return completionForUnusedSetter(completionParameters, completionResultSet);
         });
+
+        // 添加结果
+        if (CollectionUtil.isNotEmpty(lookupElementList)) {
+          lookupElementList.forEach(completionResultSet::addElement);
+        }
       }
     });
   }
