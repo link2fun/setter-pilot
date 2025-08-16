@@ -94,7 +94,6 @@ public class PsiJavaUtil {
         if (methodName.startsWith("set") && psiMethod.getParameterList().getParametersCount() == 1 
             && psiMethod.getParameterList().getParameters()[0].getType().getCanonicalText().equals(originalField.getType().getCanonicalText())) {
           setter = psiMethod;
-          continue;
         }
       }
 
